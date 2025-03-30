@@ -1,5 +1,8 @@
 import cv2
 import mediapipe as mp
+import os
+import numpy as np  # Import numpy for creating a blank canvas
+import time
 
 # Initialize MediaPipe Hands
 mp_hands = mp.solutions.hands
@@ -40,6 +43,8 @@ def count_fingers(hand_landmarks):
 # Initialize a list to store finger tip points for drawing line
 finger_tip_points = []
 
+# Initialize a blank image for drawing the line
+line_canvas = None
 
 while cap.isOpened():
     ret, frame = cap.read()
@@ -50,6 +55,10 @@ while cap.isOpened():
     # Flip the frame horizontally for a mirror-like effect
     frame = cv2.flip(frame, 1)
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    # Initialize the line canvas to match the frame size
+    if line_canvas is None:
+        line_canvas = np.zeros_like(frame)
 
     # Process the frame with MediaPipe Hands
     result = hands.process(rgb_frame)
@@ -64,19 +73,42 @@ while cap.isOpened():
             print(f"Fingers detected: {fingers_count}")  # Debugging output
             cv2.putText(frame, f"Fingers: {fingers_count}", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-            # Print "Hello" if fingers_count is 4
+            # If 4 fingers are detected, track the tip of the index finger (landmark 8)
             if fingers_count == 4:
                 index_finger_tip = hand_landmarks.landmark[8]
                 h, w, _ = frame.shape
                 x, y = int(index_finger_tip.x * w), int(index_finger_tip.y * h)
                 finger_tip_points.append((x, y))
+                print(f"Point added: ({x}, {y})")  # Debugging output
 
-                # Draw the line connecting the points
+                # Draw the line connecting the points on the line canvas
                 for i in range(1, len(finger_tip_points)):
-                    cv2.line(frame, finger_tip_points[i - 1], finger_tip_points[i], (255, 0, 0), 2)
+                    cv2.line(line_canvas, finger_tip_points[i - 1], finger_tip_points[i], (255, 0, 0), 2)
+
+            # If 5 fingers are detected, save the drawn line as an image and refresh the line
+            if fingers_count == 5:
+                if len(finger_tip_points) > 1:  # Ensure there are points to save
+                    # Save the line canvas as an image
+                    output_path = os.path.join(os.getcwd(), "drawn_line_only.png")
+                    cv2.imwrite(output_path, line_canvas)
+                    print(f"Line image saved to {output_path}", flush=True)  # Debugging output
+                else:
+                    print("No points to save, skipping image save.")  # Debugging output
+
+                # Clear the points to refresh the line
+                finger_tip_points.clear()
+                print("Cleared finger tip points.")  # Debugging output
+
+                time.sleep(2)
+
+                # Reset the line canvas
+                line_canvas = np.zeros_like(frame)
+
+    # Overlay the line canvas on the frame for display
+    combined_frame = cv2.addWeighted(frame, 0.8, line_canvas, 0.2, 0)
 
     # Display the frame
-    cv2.imshow("Hand Gesture Detection", frame)
+    cv2.imshow("Hand Gesture Detection", combined_frame)
 
     # Break the loop if 'q' is pressed
     if cv2.waitKey(1) & 0xFF == ord('q'):
