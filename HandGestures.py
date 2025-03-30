@@ -37,6 +37,10 @@ def count_fingers(hand_landmarks):
 
     return sum(fingers)
 
+# Initialize a list to store finger tip points for drawing line
+finger_tip_points = []
+
+
 while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
@@ -57,12 +61,19 @@ while cap.isOpened():
 
             # Count the number of raised fingers
             fingers_count = count_fingers(hand_landmarks)
-            print(f"Fingers detected missing: {fingers_count}")  # Debugging output
+            print(f"Fingers detected: {fingers_count}")  # Debugging output
             cv2.putText(frame, f"Fingers: {fingers_count}", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
             # Print "Hello" if fingers_count is 4
             if fingers_count == 4:
-                print("Hello", flush=True)
+                index_finger_tip = hand_landmarks.landmark[8]
+                h, w, _ = frame.shape
+                x, y = int(index_finger_tip.x * w), int(index_finger_tip.y * h)
+                finger_tip_points.append((x, y))
+
+                # Draw the line connecting the points
+                for i in range(1, len(finger_tip_points)):
+                    cv2.line(frame, finger_tip_points[i - 1], finger_tip_points[i], (255, 0, 0), 2)
 
     # Display the frame
     cv2.imshow("Hand Gesture Detection", frame)
