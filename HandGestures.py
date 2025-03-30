@@ -28,8 +28,9 @@ def count_fingers(hand_landmarks):
         else:
             fingers.append(0)  # Finger is not raised
 
-    # Check the thumb separately (horizontal movement)
-    if hand_landmarks.landmark[thumb_tip].x < hand_landmarks.landmark[thumb_tip - 1].x:
+    # Check the thumb separately (horizontal and vertical movement)
+    if hand_landmarks.landmark[thumb_tip].x < hand_landmarks.landmark[thumb_tip - 1].x and \
+       abs(hand_landmarks.landmark[thumb_tip].y - hand_landmarks.landmark[thumb_tip - 1].y) < 0.05:
         fingers.append(1)  # Thumb is raised
     else:
         fingers.append(0)  # Thumb is not raised
@@ -56,7 +57,12 @@ while cap.isOpened():
 
             # Count the number of raised fingers
             fingers_count = count_fingers(hand_landmarks)
+            print(f"Fingers detected missing: {fingers_count}")  # Debugging output
             cv2.putText(frame, f"Fingers: {fingers_count}", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+            # Print "Hello" if fingers_count is 4
+            if fingers_count == 4:
+                print("Hello", flush=True)
 
     # Display the frame
     cv2.imshow("Hand Gesture Detection", frame)
