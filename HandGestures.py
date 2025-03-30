@@ -89,12 +89,23 @@ def run_hand_gesture_detection():
                     index_finger_tip = hand_landmarks.landmark[8]
                     h, w, _ = frame.shape
                     x, y = int(index_finger_tip.x * w), int(index_finger_tip.y * h)
-                    finger_tip_points.append((x, y))
-                    print(f"Point added: ({x}, {y})")  # Debugging output
 
-                    # Draw the line connecting the points on the line canvas
-                    for i in range(1, len(finger_tip_points)):
-                        cv2.line(line_canvas, finger_tip_points[i - 1], finger_tip_points[i], (255, 0, 0), 2)
+                    # Check if the distance to the last point is within a threshold
+                    if finger_tip_points:
+                        last_x, last_y = finger_tip_points[-1]
+                        distance = np.sqrt((x - last_x) ** 2 + (y - last_y) ** 2)
+                        if distance < 50:  # Threshold to prevent jumping
+                            finger_tip_points.append((x, y))
+                            print(f"Point added: ({x}, {y})")  # Debugging output
+                            # Draw the line connecting the points on the line canvas
+                            cv2.line(line_canvas, (last_x, last_y), (x, y), (255, 0, 0), 2)
+                        else:
+                            print(f"Hand moved too far, resetting points.")  # Debugging output
+                            finger_tip_points.clear()  # Clear points to start a new segment
+                            finger_tip_points.append((x, y))  # Add the new starting point
+                    else:
+                        finger_tip_points.append((x, y))
+                        print(f"First point added: ({x}, {y})")  # Debugging output
 
                 # If no missing fingers are detected, save the drawn line as an image and refresh the line
                 if missing_fingers_count == 5:
