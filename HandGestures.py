@@ -6,6 +6,8 @@ import time
 
 def run_hand_gesture_detection():
 
+    EXIT = False
+
     # Initialize MediaPipe Hands
     mp_hands = mp.solutions.hands
     mp_drawing = mp.solutions.drawing_utils
@@ -101,10 +103,10 @@ def run_hand_gesture_detection():
                     finger_tip_points.clear()
                     print("Cleared finger tip points.")  # Debugging output
 
-                    time.sleep(2)
-
                     # Reset the line canvas
                     line_canvas = np.zeros_like(frame)
+
+                    EXIT = True
 
         # Overlay the line canvas on the frame for display
         combined_frame = cv2.addWeighted(frame, 0.8, line_canvas, 0.2, 0)
@@ -113,11 +115,9 @@ def run_hand_gesture_detection():
         cv2.imshow("Hand Gesture Detection", combined_frame)
 
         # Break the loop if 'q' is pressed
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if cv2.waitKey(1) & 0xFF == ord('q') or EXIT:
             break
 
     # Release resources
     cap.release()
     cv2.destroyAllWindows()
-
-run_hand_gesture_detection()
