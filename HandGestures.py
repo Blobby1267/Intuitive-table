@@ -78,6 +78,7 @@ def run_hand_gesture_detection():
                 cv2.putText(frame, f"Fingers: {fingers_count}", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
                 # If 4 fingers are detected, track the tip of the index finger (landmark 8)
+                
                 if fingers_count == 4:
                     index_finger_tip = hand_landmarks.landmark[8]
                     h, w, _ = frame.shape
