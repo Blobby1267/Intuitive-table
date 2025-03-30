@@ -16,33 +16,40 @@ def run_hand_gesture_detection():
     # Open the webcam
     cap = cv2.VideoCapture(0)
 
-    def count_fingers(hand_landmarks):
+    def count_missing_fingers(hand_landmarks):
         """
-        Count the number of raised fingers based on hand landmarks.
+        Count the number of missing fingers based on hand landmarks.
         """
         # Define the tips of the fingers
         finger_tips = [8, 12, 16, 20]
         thumb_tip = 4
 
-        # Count fingers
-        fingers = []
+        # Calculate the palm center as the average of wrist (0) and middle finger MCP (9)
+        palm_center_x = (hand_landmarks.landmark[0].x + hand_landmarks.landmark[9].x) / 2
+        palm_center_y = (hand_landmarks.landmark[0].y + hand_landmarks.landmark[9].y) / 2
+
+        # Count missing fingers
+        missing_fingers = []
 
         # Check for each finger
         for tip in finger_tips:
-            # Check if the tip is above the corresponding lower joint
-            if hand_landmarks.landmark[tip].y < hand_landmarks.landmark[tip - 2].y:
-                fingers.append(1)  # Finger is raised
+            # Check if the tip is below the corresponding lower joint
+            if hand_landmarks.landmark[tip].y >= hand_landmarks.landmark[tip - 2].y:
+                missing_fingers.append(1)  # Finger is missing
             else:
-                fingers.append(0)  # Finger is not raised
+                missing_fingers.append(0)  # Finger is not missing
 
-        # Check the thumb separately (horizontal and vertical movement)
-        if hand_landmarks.landmark[thumb_tip].x < hand_landmarks.landmark[thumb_tip - 1].x and \
-           abs(hand_landmarks.landmark[thumb_tip].y - hand_landmarks.landmark[thumb_tip - 1].y) < 0.05:
-            fingers.append(1)  # Thumb is raised
+        # Check the thumb separately using its position relative to the palm center
+        thumb_tip_x = hand_landmarks.landmark[thumb_tip].x
+        thumb_tip_y = hand_landmarks.landmark[thumb_tip].y
+
+        # Thumb is considered "missing" if it is too close to the palm center
+        if abs(thumb_tip_x - palm_center_x) < 0.1 and abs(thumb_tip_y - palm_center_y) < 0.1:
+            missing_fingers.append(1)  # Thumb is missing
         else:
-            fingers.append(0)  # Thumb is not raised
+            missing_fingers.append(0)  # Thumb is not missing
 
-        return sum(fingers)
+        return sum(missing_fingers)
 
     # Initialize a list to store finger tip points for drawing line
     finger_tip_points = []
@@ -72,14 +79,13 @@ def run_hand_gesture_detection():
                 # Draw hand landmarks on the frame
                 mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
-                # Count the number of raised fingers
-                fingers_count = count_fingers(hand_landmarks)
-                print(f"Fingers detected: {fingers_count}")  # Debugging output
-                cv2.putText(frame, f"Fingers: {fingers_count}", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                # Count the number of missing fingers
+                missing_fingers_count = count_missing_fingers(hand_landmarks)
+                print(f"Missing fingers detected: {missing_fingers_count}")  # Debugging output
+                cv2.putText(frame, f"Missing Fingers: {missing_fingers_count}", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-                # If 4 fingers are detected, track the tip of the index finger (landmark 8)
-                
-                if fingers_count == 4:
+                # If 1 missing finger is detected, track the tip of the index finger (landmark 8)
+                if missing_fingers_count == 4:
                     index_finger_tip = hand_landmarks.landmark[8]
                     h, w, _ = frame.shape
                     x, y = int(index_finger_tip.x * w), int(index_finger_tip.y * h)
@@ -90,8 +96,8 @@ def run_hand_gesture_detection():
                     for i in range(1, len(finger_tip_points)):
                         cv2.line(line_canvas, finger_tip_points[i - 1], finger_tip_points[i], (255, 0, 0), 2)
 
-                # If 5 fingers are detected, save the drawn line as an image and refresh the line
-                if fingers_count == 5:
+                # If no missing fingers are detected, save the drawn line as an image and refresh the line
+                if missing_fingers_count == 5:
                     if len(finger_tip_points) > 1:  # Ensure there are points to save
                         # Save the line canvas as an image
                         output_path = os.path.join(os.getcwd(), "drawn_line_only.png")
