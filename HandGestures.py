@@ -144,5 +144,4 @@ def run_hand_gesture_detection(output_dir="circle_dataset", output_image_name="d
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    # Example usage: specify a directory for saving the image
     run_hand_gesture_detection()
