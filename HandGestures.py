@@ -44,7 +44,7 @@ def run_hand_gesture_detection():
         thumb_tip_y = hand_landmarks.landmark[thumb_tip].y
 
         # Thumb is considered "missing" if it is too close to the palm center
-        if abs(thumb_tip_x - palm_center_x) < 0.1 and abs(thumb_tip_y - palm_center_y) < 0.1:
+        if abs(thumb_tip_x - palm_center_x) < 0.2 and abs(thumb_tip_y - palm_center_y) < 0.2:
             missing_fingers.append(1)  # Thumb is missing
         else:
             missing_fingers.append(0)  # Thumb is not missing
