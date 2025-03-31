@@ -3,6 +3,7 @@ import mediapipe as mp
 import os
 import numpy as np  # Import numpy for creating a blank canvas
 import time
+from MachineLearning import is_circle  # Import the is_circle function
 
 def run_hand_gesture_detection():
 
@@ -107,6 +108,15 @@ def run_hand_gesture_detection():
                         finger_tip_points.append((x, y))
                         print(f"First point added: ({x}, {y})")  # Debugging output
 
+                    # Save the current line canvas as an image and check if it's a circle
+                    if len(finger_tip_points) > 10:  # Ensure enough points are drawn
+                        temp_output_path = os.path.join(os.getcwd(), "temp_drawn_line.png")
+                        cv2.imwrite(temp_output_path, line_canvas)
+                        circle_result = is_circle(temp_output_path)
+                        print(f"Circle Check: Is Circle: {circle_result['is_circle']}, Confidence: {circle_result['confidence']:.2f}")
+                        if circle_result['is_circle']:
+                            cv2.putText(frame, "Circle Detected!", (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
                 # If no missing fingers are detected, save the drawn line as an image and refresh the line
                 if missing_fingers_count == 5:
                     if len(finger_tip_points) > 1:  # Ensure there are points to save
@@ -139,3 +149,6 @@ def run_hand_gesture_detection():
     # Release resources
     cap.release()
     cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    run_hand_gesture_detection()

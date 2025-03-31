@@ -1,4 +1,3 @@
-import HandGestures as hg
 import cv2
 import numpy as np
 from sklearn.svm import SVC
@@ -22,16 +21,18 @@ def is_circle(image_path):
     for contour in contours:
         area = cv2.contourArea(contour)
         perimeter = cv2.arcLength(contour, True)
-        if perimeter == 0:
+        if perimeter == 0 or area == 0:
             continue
         circularity = 4 * np.pi * (area / (perimeter ** 2))
-        features.append([area, perimeter, circularity])
+        bounding_rect = cv2.boundingRect(contour)
+        aspect_ratio = bounding_rect[2] / bounding_rect[3]  # Width / Height
+        features.append([area, perimeter, circularity, aspect_ratio])
     
     if not features:
         return {"is_circle": False, "confidence": 0.0}
     
-    # Use the first contour's features for simplicity
-    features = np.array(features[0]).reshape(1, -1)
+    # Use the largest contour's features for evaluation
+    features = np.array(max(features, key=lambda x: x[0])).reshape(1, -1)
     
     # Load or train a simple model
     model_path = "circle_detector_model.pkl"
@@ -40,8 +41,13 @@ def is_circle(image_path):
         model = joblib.load(model_path)
     else:
         # Train a simple model (for demonstration purposes)
-        X_train = np.array([[1000, 120, 1.0], [500, 80, 0.5]])  # Example data
-        y_train = np.array([1, 0])  # 1 for circle, 0 for not circle
+        X_train = np.array([
+            [1000, 120, 1.0, 1.0],  # Circle example
+            [500, 80, 0.5, 1.2],   # Non-circle example
+            [1500, 140, 0.9, 1.0], # Circle example
+            [400, 70, 0.4, 1.3]    # Non-circle example
+        ])
+        y_train = np.array([1, 0, 1, 0])  # 1 for circle, 0 for not circle
         model = make_pipeline(StandardScaler(), SVC(probability=True))
         model.fit(X_train, y_train)
         import joblib
