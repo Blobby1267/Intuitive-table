@@ -103,8 +103,9 @@ def run_hand_gesture_detection(output_dir="circle_dataset", output_image_name="d
                             # Draw the line connecting the points on the line canvas
                             cv2.line(line_canvas, (last_x, last_y), (x, y), (255, 0, 0), 2)
                         else:
-                            print(f"Hand moved too far, resetting points.")  # Debugging output
-                            finger_tip_points.clear()  # Clear points to start a new segment
+                            print(f"Hand moved too far, clearing points and canvas.")  # Debugging output
+                            finger_tip_points.clear()  # Clear points to remove the tail
+                            line_canvas = np.zeros_like(frame)  # Reset the line canvas
                             finger_tip_points.append((x, y))  # Add the new starting point
                     else:
                         finger_tip_points.append((x, y))
