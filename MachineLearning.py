@@ -17,11 +17,14 @@ def preprocess_image(image_path):
         raise FileNotFoundError(f"Image not found at {image_path}")
     
     try:
-        image = cv2.resize(image, (64, 64))
+        # Standardize resizing to a fixed size
+        image = cv2.resize(image, (128, 128))
         
-        # Use adaptive thresholding for better contour detection
-        thresh = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-                                       cv2.THRESH_BINARY, 11, 2)
+        # Normalize pixel values
+        image = cv2.normalize(image, None, 0, 255, cv2.NORM_MINMAX)
+        
+        # Apply Otsu's thresholding for consistency
+        _, thresh = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         
         # Save the thresholded image for debugging
         debug_dir = os.path.join(BASE_DIR, "debug")
@@ -29,6 +32,7 @@ def preprocess_image(image_path):
         debug_path = os.path.join(debug_dir, os.path.basename(image_path))
         cv2.imwrite(debug_path, thresh)
         
+        # Extract contours
         contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
         if not contours:
@@ -48,7 +52,8 @@ def preprocess_image(image_path):
         if not features:
             return None
         
-        largest_feature = max(features, key=lambda x: x[0])  # Use the largest contour's features
+        # Use the largest contour's features
+        largest_feature = max(features, key=lambda x: x[0])
         return largest_feature
     except Exception:
         return None
@@ -70,7 +75,7 @@ def load_dataset(dataset_path):
         raise ValueError("Dataset is empty or improperly formatted.")
     return np.array(X), np.array(y)
 
-def is_circle(image_path):
+def is_circle(image_path="circle_dataset/drawn_line.png"):
     # Load or train the model
     model_path = os.path.join(BASE_DIR, "circle_detector_model.pkl")
     if os.path.exists(model_path):
