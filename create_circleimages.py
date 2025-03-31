@@ -1,7 +1,7 @@
 import os
 import HandGestures as hg  # Import the function from handgestures
 
-AHH = "0"
+AHH = "1"
 
 if AHH == "1":
     while True:
