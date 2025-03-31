@@ -105,7 +105,7 @@ def is_circle(image_path="circle_dataset/drawn_line.png"):
     confidence = model.predict_proba(features)[0][1]  # Probability for "circle" class
     
     # Require confidence of at least 0.7 to classify as a circle
-    return {"is_circle": bool(prediction[0])and confidence >= 0.7, "confidence": confidence}
+    return {"is_circle": bool(prediction[0])and confidence >= 0.6, "confidence": confidence}
 
 # Example usage
 if __name__ == "__main__":
