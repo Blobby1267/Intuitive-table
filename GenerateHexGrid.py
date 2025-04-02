@@ -43,13 +43,13 @@ def display_hexagon_grid_pygame(hex_positions, hex_size, screen_size=(640, 480),
     pygame.quit()
 
 
-def generate_hexagons(start_x, start_y, hex_size, rows, cols, screen_size=(640, 480)):
+def generate_hexagons(x_start, y_start, hex_size, rows, cols, screen_size=(640, 480)):
     """
     Generate a hexagonal grid with the specified number of rows and columns, centered on the screen.
     Track unique corners of each hexagon.
     
-    :param start_x: X-coordinate of the first hexagon's center
-    :param start_y: Y-coordinate of the first hexagon's center
+    :param x_start: X-coordinate of the first hexagon's center
+    :param y_start: Y-coordinate of the first hexagon's center
     :param hex_size: Size (radius) of each hexagon
     :param rows: Number of rows in the grid
     :param cols: Number of columns in the grid
@@ -62,7 +62,9 @@ def generate_hexagons(start_x, start_y, hex_size, rows, cols, screen_size=(640, 
     hex_positions = []
     hex_map = {}
     corner_map = {}
-    corner_index = 0
+    corner_id_map = {}  # Maps corner positions to their assigned corner IDs
+    corner_id_counter = 0
+
     dx = 3/2 * hex_size  # Horizontal distance between centers
     dy = math.sqrt(3) * hex_size  # Vertical distance between rows
 
@@ -72,46 +74,38 @@ def generate_hexagons(start_x, start_y, hex_size, rows, cols, screen_size=(640, 
     offset_x = (screen_size[0] - grid_width) / 2
     offset_y = (screen_size[1] - grid_height) / 2
 
-    def is_close(corner1, corner2, margin=1):
-        """
-        Check if two corners are within a given margin of each other.
-        
-        :param corner1: First corner (x, y)
-        :param corner2: Second corner (x, y)
-        :param margin: Error margin
-        :return: True if the corners are within the margin, False otherwise
-        """
-        return abs(corner1[0] - corner2[0]) <= margin and abs(corner1[1] - corner2[1]) <= margin
-
     for row in range(rows):
         for col in range(cols):
-            x = start_x + col * dx + offset_x
-            y = start_y + row * dy + offset_y
-            # Offset every other row to create the staggered hexagonal grid
+            # Calculate hexagon center position
+            x = x_start + col * dx + offset_x
+            y = y_start + row * dy + offset_y
             if col % 2 == 1:
-                y += dy / 2
-            hex_positions.append((x, y))
-            hex_map[len(hex_positions) - 1] = (x, y)
+                y += dy / 2  # Offset for odd columns
 
-            # Calculate corners and track unique ones
+            hex_positions.append((x, y))
+            hex_map[(row, col)] = len(hex_positions) - 1
+
+            # Calculate corner positions
             corners = [
-                (x + hex_size * math.cos(math.radians(angle)), 
-                 y + hex_size * math.sin(math.radians(angle)))
+                (round(x + hex_size * math.cos(math.radians(angle)), 5),  # Round to avoid floating-point precision issues
+                 round(y + hex_size * math.sin(math.radians(angle)), 5))
                 for angle in range(0, 360, 60)
             ]
+
+            # Assign corner IDs
             for corner in corners:
-                if not any(is_close(corner, existing_corner) for existing_corner in corner_map.values()):
-                    corner_map[corner_index] = corner
-                    corner_index += 1
+                if corner not in corner_id_map:
+                    corner_id_map[corner] = corner_id_counter
+                    corner_map[corner_id_counter] = corner
+                    corner_id_counter += 1
 
     return hex_positions, hex_map, corner_map
 
-"""
+
 # Update the function call to include corner tracking
-iterative_hex_positions, hexagon_map, corner_map = generate_hexagons(0, 0, 20, 10, 10, screen_size=(640, 480))
-display_hexagon_grid_pygame(iterative_hex_positions, 20, corner_map=corner_map)
+#iterative_hex_positions, hexagon_map, corner_map = generate_hexagons(0, 0, 20, 10, 10, screen_size=(640, 480))
+#display_hexagon_grid_pygame(iterative_hex_positions, 20, corner_map=corner_map)
 
 # Debugging: Print the hexagon map and corner map to verify tracking
-print("\nHexagon Map:", hexagon_map)
-print("\nCorner Map:", corner_map)"
-"""
+#print("\nHexagon Map:", hexagon_map)
+#print("\nCorner Map:", corner_map)
