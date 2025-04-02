@@ -87,8 +87,8 @@ def generate_hexagons(x_start, y_start, hex_size, rows, cols, screen_size=(640, 
 
             # Calculate corner positions
             corners = [
-                (round(x + hex_size * math.cos(math.radians(angle)), 5),  # Round to avoid floating-point precision issues
-                 round(y + hex_size * math.sin(math.radians(angle)), 5))
+                (x + hex_size * math.cos(math.radians(angle)),  # Removed rounding
+                 y + hex_size * math.sin(math.radians(angle)))
                 for angle in range(0, 360, 60)
             ]
 

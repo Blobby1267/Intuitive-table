@@ -27,22 +27,34 @@ def get_hexagon(circle_pos, hex_positions, hex_size):
     return closest_hex
 
 
-def move_circle(circle_pos, corner_pos):
+def move_circle(circle_pos, corner_pos, hex_center):
     """
-    Move the circle away from the selected corner.
+    Move the circle parallel to the line passing through the corner and the hexagon center.
     
     :param circle_pos: (x, y) position of the circle
     :param corner_pos: (x, y) position of the selected corner
+    :param hex_center: (x, y) position of the hexagon center
     :return: New (x, y) position of the circle
     """
-    direction = (circle_pos[0] - corner_pos[0], circle_pos[1] - corner_pos[1])  # Reverse direction
+    # Calculate the direction vector of the line passing through the corner and hex center
+    direction = (corner_pos[0] - hex_center[0], corner_pos[1] - hex_center[1])
     magnitude = math.sqrt(direction[0] ** 2 + direction[1] ** 2)
-    if magnitude < 0.1:  # If already very close, move slightly away
-        step_size = 1  # Small step size
-        return (circle_pos[0] + direction[0] * step_size, circle_pos[1] + direction[1] * step_size)
+    
+    if magnitude == 0:
+        return circle_pos  # No movement if the corner and hex center are the same
+    
+    # Normalize the direction vector
     unit_vector = (direction[0] / magnitude, direction[1] / magnitude)
+    
+    # Calculate the perpendicular vector to the direction
+    perpendicular_vector = (-unit_vector[1], unit_vector[0])
+    
+    # Move the circle parallel to the line
     step_size = 1  # Adjust step size as needed
-    return (circle_pos[0] + unit_vector[0] * step_size, circle_pos[1] + unit_vector[1] * step_size)
+    new_circle_pos = (circle_pos[0] + perpendicular_vector[0] * step_size,
+                      circle_pos[1] + perpendicular_vector[1] * step_size)
+    
+    return new_circle_pos
 
 
 def draw_extended_line(screen, color, start_pos, end_pos, width=1):
@@ -224,7 +236,8 @@ def simulate_circle_movement(start_pos, destination, hex_positions, hex_size, co
                              (int(corner_pos[0]), int(corner_pos[1])), 2)  # Magenta line
 
             # Move circle
-            circle_pos = move_circle(circle_pos, corner_pos)
+            hex_center = hex_positions[current_hex]
+            circle_pos = move_circle(circle_pos, corner_pos, hex_center)
             print(f"Moving circle to: {circle_pos}")
 
             # Check if the circle has reached the corner
@@ -233,7 +246,7 @@ def simulate_circle_movement(start_pos, destination, hex_positions, hex_size, co
                 corners_to_raise.pop(0)
         else:
             # Move directly toward the destination if no corners are selected
-            circle_pos = move_circle(circle_pos, destination)
+            circle_pos = move_circle(circle_pos, destination, hex_positions[current_hex])
             print(f"Moving circle directly toward destination: {circle_pos}")
 
         # Stop simulation if the circle is close enough to the destination
@@ -252,8 +265,8 @@ if __name__ == "__main__":
     hex_positions, hex_map, corner_map = ghg.generate_hexagons(0, 0, 20, 10, 10, screen_size=(640, 480))
     
     # Debug: Print hex_positions and corner_map
-    #print(f"Hex positions: {hex_positions}")
-    #print(f"Corner map: {corner_map}")
+    print(f"Hex positions: {hex_positions}")
+    print(f"Corner map: {corner_map}")
     start_pos = (200, 100)
     destination = (300, 300)
     simulate_circle_movement(start_pos, destination, hex_positions, 20, corner_map)
